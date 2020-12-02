@@ -1,2 +1,17 @@
 # MABEA-knapsack
-Multi-Agent based Evolutionary Algorithm for Dynamic Knapsack Problem
+Vanilla implementation of 
+Multi-Agent based Evolutionary Algorithm for Unbounded Knapsack Problem
+
+### Installation
+
+Simple deps:
+
+`pip install -r requirements.txt`
+
+### Running
+
+To run brute-force run `brute_force.py
+To run Agent-based EA run `agent_based_ea.py`
+
+### Results
+
