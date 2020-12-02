@@ -1,36 +1,41 @@
 """ Reference code from
-https://www.educative.io/blog/0-1-knapsack-problem-dynamic-solution
+https://towardsdatascience.com/neural-knapsack-8edd737bdc15
 No rights claimed
 """
 
-
-def solve_knapsack(profits, weights, capacity):
-    return knapsack_recursive(profits, weights, capacity, 0)
+import numpy as np
 
 
-def knapsack_recursive(profits, weights, capacity, currentIndex):
-    # base checks
-    if capacity <= 0 or currentIndex >= len(profits):
-        return 0
+def brute_force_knapsack(x_weights, x_prices, x_capacity):
+    item_count = x_weights.shape[0]
+    picks_space = 2 ** item_count
+    best_price = -1
+    best_picks = np.zeros(item_count)
+    for p in range(picks_space):
+        picks = [int(c) for c in f"{p:0{item_count}b}"]
+        price = np.dot(x_prices, picks)
+        weight = np.dot(x_weights, picks)
+        if weight <= x_capacity and price > best_price:
+            best_price = price
+            best_picks = picks
+    return best_picks
 
-    # recursive call after choosing the element at the currentIndex
-    # if the weight of the element at currentIndex exceeds the capacity, we  shouldn't process this
-    profit1 = 0
-    if weights[currentIndex] <= capacity:
-        profit1 = profits[currentIndex] + knapsack_recursive(
-            profits, weights, capacity - weights[currentIndex], currentIndex + 1)
 
-    # recursive call after excluding the element at the currentIndex
-    profit2 = knapsack_recursive(profits, weights, capacity, currentIndex + 1)
+def create_knapsack(item_count=5):
 
-    return max(profit1, profit2)
+    x_weights = np.random.randint(1, 45, item_count)
+    x_prices = np.random.randint(1, 99, item_count)
+    x_capacity = np.random.randint(50, 99)
+    return x_weights, x_prices, x_capacity
 
 
 if __name__ == '__main__':
+    np.random.seed(42)
+    x_weights, x_prices, x_capacity = create_knapsack(item_count=20)
+    best_picks = brute_force_knapsack(x_weights, x_prices, x_capacity)
 
-    print(solve_knapsack([1, 6, 10, 16], [1, 2, 3, 5], 7))
-    print(solve_knapsack([1, 6, 10, 16], [1, 2, 3, 5], 6))
-    print(solve_knapsack([2, 6, 10, 16, 18, 20, 31], [1, 2, 3, 5, 6, 7, 11], 6))
-    print(solve_knapsack([2, 6, 10, 16, 18, 20, 31], [1, 2, 3, 5, 6, 7, 11], 19))
-    print(solve_knapsack([1, 6, 10, 16, 17, 18, 20, 31], [1, 2, 3,  5,  5,  6,  7,  11], 20))
-
+    print(x_weights)
+    print(x_prices)
+    print(x_capacity)
+    print(best_picks)
+    print(np.sum(x_prices[best_picks]))

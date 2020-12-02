@@ -5,15 +5,8 @@ import numpy as np
 from tabulate import tabulate
 import matplotlib.pylab as plt
 
+from knapsack import create_knapsack
 
-profits = [1, 6, 10, 16, 17, 18, 20, 31]
-weights = [1, 2, 3,  5,  5,  6,  7,  11]
-weight_limit = 20
-#
-# profits =  [135, 139, 149, 150, 156, 163, 173, 184, 192, 201, 210, 214, 221, 229, 240]
-# weights =  [ 70, 73, 77, 80, 82, 87, 90, 94, 98, 106, 110, 113, 115, 118, 120]
-# weight_limit = 750
-#
 
 class Agent:
     def __init__(self, profits, weights, weight_limit):
@@ -26,18 +19,18 @@ class Agent:
 
     def _random_init(self, profits, weights, weight_limit):
         inds = np.arange(len(profits))
-        np.random.shuffle(inds)
 
         total_weight = 0
         total_value = 0
 
-        for i, (value, weight) in enumerate(zip(np.array(profits)[inds], np.array(weights)[inds])):
-            if total_weight + weight > weight_limit:
+        while True:
+            ind = np.random.choice(inds, 1)[0]
+            if total_weight + weights[ind] > weight_limit:
                 break
-            total_value += value
-            total_weight += weight
-            self.chosen_profits.append(value)
-            self.chosen_weights.append(weight)
+            total_value += profits[ind]
+            total_weight += weights[ind]
+            self.chosen_profits.append(profits[ind])
+            self.chosen_weights.append(weights[ind])
 
         self.energy = total_value
 
@@ -45,6 +38,7 @@ class Agent:
         inds = np.arange(len(self.chosen_profits))
 
         weights_sum = np.sum(self.chosen_weights)
+        profits_sum = np.sum(self.chosen_profits)
         while True:
             to_remove = np.random.choice(inds, 1)[0]
             to_add = np.random.choice(inds, 1)[0]
@@ -54,8 +48,19 @@ class Agent:
 
                 self.chosen_profits.append(profits[to_add])
                 self.chosen_weights.append(weights[to_add])
-                self.energy = weights_sum - weights[to_remove] + weights[to_add]
+                self.energy = profits_sum - profits[to_remove] + profits[to_add]
                 break
+
+    # def mutate_remove(self, profits, weights):
+    #     inds = np.arange(len(self.chosen_profits))
+    #
+    #     profits_sum = np.sum(self.chosen_profits)
+    #     while True:
+    #         to_remove = np.random.choice(inds, 1)[0]
+    #         self.chosen_profits.pop(to_remove)
+    #         self.chosen_weights.pop(to_remove)
+    #         self.energy = profits_sum - profits[to_remove]
+    #         break
 
 
 class Lattice:
@@ -71,6 +76,7 @@ class Lattice:
                 self.ind2agent[(i_row, i_col)] = i
                 i += 1
         self.agent2ind = {v: k for k, v in self.ind2agent.items()}
+        self.print()
 
     def print(self):
         print(tabulate(self.get_energies()))
@@ -131,13 +137,21 @@ class Lattice:
 
 if __name__ == '__main__':
     config = {
-        'seed': 1000,
-        'print_interval': 10,
-        'num_iters': 1000,
+        'seed': 42,
+        'print_interval': 60,
+        'n_generations': 10000,
+        'early_stopping': 1000,
         'mutation_probability': 0.2,
-        'lattice_size': 6,
+        'lattice_size': 8,
     }
+
+    # profits = [1, 6, 10, 16, 17, 18, 20, 31]
+    # weights = [1, 2, 3,  5,  5,  6,  7,  11]
+    # weight_limit = 20
     np.random.seed(config['seed'])
+
+    weights, profits, weight_limit = create_knapsack(item_count=20)
+
     timestamp = datetime.now().strftime("%d-%b-%Y_(%H:%M:%S.%f)")
 
     latt = Lattice(profits, weights, weight_limit, size=config['lattice_size'])
@@ -145,14 +159,30 @@ if __name__ == '__main__':
     means = []
     maxes = []
 
-    for i in range(config['num_iters']):
+    es_it = 0
+    prev_maximum = 0
+
+    for i in range(config['n_generations']):
+        latt.selection(profits, weights, mutation_probability=config['mutation_probability'])
+
+        # Log
         if i % config['print_interval'] == 0:
             print(i)
             latt.print()
 
-        latt.selection(profits, weights, mutation_probability=config['mutation_probability'])
         means.append(np.mean(latt.get_energies()))
-        maxes.append(np.amax(latt.get_energies()))
+        maximum = np.amax(latt.get_energies())
+        maxes.append(maximum)
+
+        if maximum <= prev_maximum:
+            es_it += 1
+        else:
+            prev_maximum = maximum
+            es_it = 0
+        if es_it == config['early_stopping']:
+            break
+
+    print(f'Best result: {np.amax(maxes)}')
 
     plt.figure()
     plt.plot(means)
