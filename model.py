@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 import yaml
 import numpy as np
@@ -5,59 +6,63 @@ from tabulate import tabulate
 import matplotlib.pylab as plt
 
 
-values =  [1, 6, 10, 16, 17, 18, 20, 31]
+profits = [1, 6, 10, 16, 17, 18, 20, 31]
 weights = [1, 2, 3,  5,  5,  6,  7,  11]
 weight_limit = 20
-
+#
+# profits =  [135, 139, 149, 150, 156, 163, 173, 184, 192, 201, 210, 214, 221, 229, 240]
+# weights =  [ 70, 73, 77, 80, 82, 87, 90, 94, 98, 106, 110, 113, 115, 118, 120]
+# weight_limit = 750
+#
 
 class Agent:
-    def __init__(self, values, weights, weight_limit):
+    def __init__(self, profits, weights, weight_limit):
         self.energy = 0
         self.weight_limit = weight_limit
-        self.values = []
-        self.weights = []
+        self.chosen_profits = []
+        self.chosen_weights = []
 
-        self._random_init(values, weights, weight_limit)
+        self._random_init(profits, weights, weight_limit)
 
-    def _random_init(self, values, weights, weight_limit):
-        inds = np.arange(len(values))
+    def _random_init(self, profits, weights, weight_limit):
+        inds = np.arange(len(profits))
         np.random.shuffle(inds)
 
         total_weight = 0
         total_value = 0
 
-        for i, (value, weight) in enumerate(zip(np.array(values)[inds], np.array(weights)[inds])):
+        for i, (value, weight) in enumerate(zip(np.array(profits)[inds], np.array(weights)[inds])):
             if total_weight + weight > weight_limit:
                 break
             total_value += value
             total_weight += weight
-            self.values.append(value)
-            self.weights.append(weight)
+            self.chosen_profits.append(value)
+            self.chosen_weights.append(weight)
 
         self.energy = total_value
 
-    def mutate(self, values, weights):
-        inds = np.arange(len(values))
+    def mutate(self, profits, weights):
+        inds = np.arange(len(self.chosen_profits))
 
-        weights_sum = np.sum(self.weights)
+        weights_sum = np.sum(self.chosen_weights)
         while True:
-            to_remove = np.random.choice(inds, 1)
-            to_add = np.random.choice(inds, 1)
+            to_remove = np.random.choice(inds, 1)[0]
+            to_add = np.random.choice(inds, 1)[0]
             if weights_sum - weights[to_remove] + weights[to_add] < weight_limit:
-                self.values.pop(to_remove)
-                self.weights.pop(to_remove)
+                self.chosen_profits.pop(to_remove)
+                self.chosen_weights.pop(to_remove)
 
-                self.values.append(weights[to_add])
-                self.weights.append(weights[to_add])
+                self.chosen_profits.append(profits[to_add])
+                self.chosen_weights.append(weights[to_add])
                 self.energy = weights_sum - weights[to_remove] + weights[to_add]
                 break
 
 
 class Lattice:
-    def __init__(self, size=4):
+    def __init__(self, profits, weights, weight_limit, size=4):
         self.size = size
         self.n_agents = size * size
-        self.grid = [Agent(values, weights, weight_limit) for _ in range(self.n_agents)]
+        self.grid = [Agent(profits, weights, weight_limit) for _ in range(self.n_agents)]
 
         self.ind2agent = {}
         i = 0
@@ -68,16 +73,15 @@ class Lattice:
         self.agent2ind = {v: k for k, v in self.ind2agent.items()}
 
     def print(self):
-        print(tabulate(self._get_energies()))
+        print(tabulate(self.get_energies()))
 
     def get_energies(self):
-        energies = [[] for _ in range(self.size)]
+        energies = np.zeros((self.size, self.size))
         for i, (i_row, i_col) in self.agent2ind.items():
-            curr_ind = (i_row * self.size) + i_col
-            energies[i_row].append(self.grid[curr_ind].energy)
+            energies[i_row, i_col] = self.grid[i].energy
         return energies
 
-    def _get_neighbours(self, energies, i_row, i_col):
+    def _get_neighbours(self, i_row, i_col):
 
         col_bw = i_col-1
         col_fw = i_col+1
@@ -100,40 +104,53 @@ class Lattice:
 
         return neighbours
 
-    def selection(self):
-        mutation_probability = 1
+    def crossover(self, energies, neighbours_inds):
+        max_ind_abs = neighbours_inds[np.argmax(energies)]
+        return copy.deepcopy(self.grid[max_ind_abs])
+
+    def selection(self, profits, weights, mutation_probability):
 
         energies = np.array(self.get_energies())
         new_grid = []
 
         for i, (i_row, i_col) in self.agent2ind.items():
-            neighbours = self._get_neighbours(energies, i_row, i_col)
-            for neighbour in neighbours:
-                if self.grid[neighbour].energy == np.amax(energies):
-                    if np.random.rand() < mutation_probability:
-                        self.grid[i].mutate()
-                    new_grid.append(self.grid[i])
+            neighbours_inds = self._get_neighbours(i_row, i_col)
+            neighbours_energies = energies.ravel()[neighbours_inds]
+
+            if self.grid[i].energy == np.amax(neighbours_energies):
+                if np.random.rand() < mutation_probability:
+                    mutated = copy.deepcopy(self.grid[i])
+                    mutated.mutate(profits, weights)
+                    new_grid.append(mutated)
                 else:
-                    crossover()
-                    new_grid.append(i)
+                    new_grid.append(copy.deepcopy(self.grid[i]))
+            else:
+                new_grid.append(self.crossover(neighbours_energies, neighbours_inds))
+        self.grid = new_grid
 
 
 if __name__ == '__main__':
     config = {
         'seed': 1000,
+        'print_interval': 10,
         'num_iters': 1000,
+        'mutation_probability': 0.2,
+        'lattice_size': 6,
     }
     np.random.seed(config['seed'])
     timestamp = datetime.now().strftime("%d-%b-%Y_(%H:%M:%S.%f)")
 
-    latt = Lattice()
-    latt.print()
+    latt = Lattice(profits, weights, weight_limit, size=config['lattice_size'])
 
     means = []
     maxes = []
 
     for i in range(config['num_iters']):
-        latt.selection()
+        if i % config['print_interval'] == 0:
+            print(i)
+            latt.print()
+
+        latt.selection(profits, weights, mutation_probability=config['mutation_probability'])
         means.append(np.mean(latt.get_energies()))
         maxes.append(np.amax(latt.get_energies()))
 
@@ -142,5 +159,5 @@ if __name__ == '__main__':
     plt.plot(maxes, 'r')
     plt.savefig(f'results/{timestamp}.png')
 
-    with open(f'results/{timestamp}.yml') as f:
+    with open(f'results/{timestamp}.yml', 'w') as f:
         f.write(yaml.dump(config))
