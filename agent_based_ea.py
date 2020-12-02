@@ -34,7 +34,7 @@ class Agent:
 
         self.energy = total_value
 
-    def mutate(self, profits, weights):
+    def mutate(self, profits, weights, capacity):
         inds = np.arange(len(self.chosen_profits))
 
         weights_sum = np.sum(self.chosen_weights)
@@ -42,7 +42,7 @@ class Agent:
         while True:
             to_remove = np.random.choice(inds, 1)[0]
             to_add = np.random.choice(inds, 1)[0]
-            if weights_sum - weights[to_remove] + weights[to_add] < weight_limit:
+            if weights_sum - weights[to_remove] + weights[to_add] < capacity:
                 self.chosen_profits.pop(to_remove)
                 self.chosen_weights.pop(to_remove)
 
@@ -64,10 +64,10 @@ class Agent:
 
 
 class Lattice:
-    def __init__(self, profits, weights, weight_limit, size=4):
+    def __init__(self, profits, weights, capacity, size=4):
         self.size = size
         self.n_agents = size * size
-        self.grid = [Agent(profits, weights, weight_limit) for _ in range(self.n_agents)]
+        self.grid = [Agent(profits, weights, capacity) for _ in range(self.n_agents)]
 
         self.ind2agent = {}
         i = 0
@@ -114,7 +114,7 @@ class Lattice:
         max_ind_abs = neighbours_inds[np.argmax(energies)]
         return copy.deepcopy(self.grid[max_ind_abs])
 
-    def selection(self, profits, weights, mutation_probability):
+    def selection(self, profits, weights, capacity, mutation_probability):
 
         energies = np.array(self.get_energies())
         new_grid = []
@@ -126,7 +126,7 @@ class Lattice:
             if self.grid[i].energy == np.amax(neighbours_energies):
                 if np.random.rand() < mutation_probability:
                     mutated = copy.deepcopy(self.grid[i])
-                    mutated.mutate(profits, weights)
+                    mutated.mutate(profits, weights, capacity)
                     new_grid.append(mutated)
                 else:
                     new_grid.append(copy.deepcopy(self.grid[i]))
@@ -142,7 +142,7 @@ if __name__ == '__main__':
         'n_generations': 10000,
         'early_stopping': 1000,
         'mutation_probability': 0.2,
-        'lattice_size': 8,
+        'lattice_size': 12,
     }
 
     # profits = [1, 6, 10, 16, 17, 18, 20, 31]
@@ -150,11 +150,11 @@ if __name__ == '__main__':
     # weight_limit = 20
     np.random.seed(config['seed'])
 
-    weights, profits, weight_limit = create_knapsack_data(item_count=20)
+    profits, weights, capacity = create_knapsack_data(item_count=20)
 
-    timestamp = datetime.now().strftime("%d-%b-%Y_(%H:%M:%S.%f)")
+    timestamp = datetime.now().strftime("%d-%b-%Y-%H-%M-%S")
 
-    latt = Lattice(profits, weights, weight_limit, size=config['lattice_size'])
+    latt = Lattice(profits, weights, capacity, size=config['lattice_size'])
 
     means = []
     maxes = []
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     prev_maximum = 0
 
     for i in range(config['n_generations']):
-        latt.selection(profits, weights, mutation_probability=config['mutation_probability'])
+        latt.selection(profits, weights, capacity, mutation_probability=config['mutation_probability'])
 
         # Log
         if i % config['print_interval'] == 0:
