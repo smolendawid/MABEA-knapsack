@@ -5,7 +5,7 @@ import numpy as np
 from tabulate import tabulate
 import matplotlib.pylab as plt
 
-from knapsack import create_knapsack
+from generate_data import create_knapsack_data
 
 
 class Agent:
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     # weight_limit = 20
     np.random.seed(config['seed'])
 
-    weights, profits, weight_limit = create_knapsack(item_count=20)
+    weights, profits, weight_limit = create_knapsack_data(item_count=20)
 
     timestamp = datetime.now().strftime("%d-%b-%Y_(%H:%M:%S.%f)")
 

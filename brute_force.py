@@ -4,6 +4,7 @@ No rights claimed
 """
 
 import numpy as np
+from generate_data import create_knapsack_data
 
 
 def brute_force_knapsack(x_weights, x_prices, x_capacity):
@@ -21,17 +22,9 @@ def brute_force_knapsack(x_weights, x_prices, x_capacity):
     return best_picks
 
 
-def create_knapsack(item_count=5):
-
-    x_weights = np.random.randint(1, 45, item_count)
-    x_prices = np.random.randint(1, 99, item_count)
-    x_capacity = np.random.randint(50, 99)
-    return x_weights, x_prices, x_capacity
-
-
 if __name__ == '__main__':
     np.random.seed(42)
-    x_weights, x_prices, x_capacity = create_knapsack(item_count=20)
+    x_weights, x_prices, x_capacity = create_knapsack_data(item_count=20)
     best_picks = brute_force_knapsack(x_weights, x_prices, x_capacity)
 
     print(x_weights)
