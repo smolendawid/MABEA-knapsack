@@ -27,7 +27,7 @@ class Agent:
 
         self.energy = total_value
 
-    def mutate(self, profits, weights, capacity):
+    def _mutate_both(self, profits, weights, capacity):
         inds_inner = np.arange(len(self.chosen_profits))
         inds_outer = np.arange(len(profits))
 
@@ -45,7 +45,7 @@ class Agent:
                 self.chosen_weights.append(weights[to_add])
                 break
 
-    def mutate_remove(self, profits, weights):
+    def _mutate_remove(self):
         inds = np.arange(len(self.chosen_profits))
 
         profits_sum = np.sum(self.chosen_profits)
@@ -56,7 +56,7 @@ class Agent:
             self.chosen_weights.pop(to_remove)
             break
 
-    def mutate_add(self, profits, weights, capacity):
+    def _mutate_add(self, profits, weights, capacity):
         inds = np.arange(len(profits))
 
         weights_sum = np.sum(self.chosen_weights)
@@ -69,3 +69,12 @@ class Agent:
                 self.energy = profits_sum + profits[to_add]
                 break
 
+    def mutate(self, profits, weights, capacity):
+
+        prob = np.random.rand()
+        if prob > 0.66:
+            self._mutate_both(profits, weights, capacity)
+        elif prob > 0.33:
+            self._mutate_remove()
+        elif prob > 0.0:
+            self._mutate_add(profits, weights, capacity)

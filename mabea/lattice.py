@@ -58,17 +58,6 @@ class Lattice:
         max_ind_abs = neighbours_inds[np.argmax(energies)]
         return copy.deepcopy(self.grid[max_ind_abs])
 
-    def mutate(self, offspring, profits, weights, capacity,):
-        prob = np.random.rand()
-        if prob > 0.66:
-            offspring.mutate(profits, weights, capacity)
-        elif prob > 0.33:
-            offspring.mutate_remove(profits, weights)
-        elif prob > 0.0:
-            offspring.mutate_add(profits, weights, capacity)
-
-        return offspring
-
     def selection(self, profits, weights, capacity, mutation_probability):
 
         energies = np.array(self.get_energies())
@@ -85,7 +74,8 @@ class Lattice:
                 offspring = self.crossover(neighbours_energies, neighbours_inds)
 
             if np.random.rand() < mutation_probability:
-                new_grid.append(self.mutate(offspring, profits, weights, capacity))
+                offspring.mutate(profits, weights, capacity)
+                new_grid.append(offspring)
             else:
                 new_grid.append(offspring)
         self.grid = new_grid
