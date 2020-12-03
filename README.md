@@ -16,8 +16,8 @@ to clear the output in the console after each population print.
 
 ### Running
 
-To run brute-force run `brute_force.py
-To run Agent-based EA run `agent_based_ea.py`
+To run brute-force run `run_brute_force.py
+To run Agent-based EA run `run_agent_based.py`
 
 ### Results
 
