@@ -4,6 +4,7 @@ from tabulate import tabulate
 import numpy as np
 
 from mabea.agent import Agent
+from mabea.crossover import CrossOver
 
 
 class Lattice:
@@ -12,6 +13,7 @@ class Lattice:
         self.n_agents = size * size
         self.grid = [Agent(profits, weights, capacity) for _ in range(self.n_agents)]
 
+        self.crossover = CrossOver()
         self.ind2agent = {}
         i = 0
         for i_row in range(self.size):
@@ -53,11 +55,6 @@ class Lattice:
 
         return neighbours
 
-    def crossover(self, energies, neighbours_inds):
-
-        max_ind_abs = neighbours_inds[np.argmax(energies)]
-        return copy.deepcopy(self.grid[max_ind_abs])
-
     def selection(self, profits, weights, capacity, mutation_probability):
 
         energies = np.array(self.get_energies())
@@ -71,7 +68,8 @@ class Lattice:
                 alpha = copy.deepcopy(self.grid[i])
                 offspring = alpha
             else:
-                offspring = self.crossover(neighbours_energies, neighbours_inds)
+                max_ind_abs = self.crossover.run(neighbours_energies, neighbours_inds)
+                offspring = copy.deepcopy(self.grid[max_ind_abs])
 
             if np.random.rand() < mutation_probability:
                 offspring.mutate(profits, weights, capacity)

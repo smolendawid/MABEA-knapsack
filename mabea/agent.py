@@ -49,12 +49,10 @@ class Agent:
         inds = np.arange(len(self.chosen_profits))
 
         profits_sum = np.sum(self.chosen_profits)
-        while True:
-            to_remove = np.random.choice(inds, 1)[0]
-            self.energy = profits_sum - self.chosen_profits[to_remove]
-            self.chosen_profits.pop(to_remove)
-            self.chosen_weights.pop(to_remove)
-            break
+        to_remove = np.random.choice(inds, 1)[0]
+        self.energy = profits_sum - self.chosen_profits[to_remove]
+        self.chosen_profits.pop(to_remove)
+        self.chosen_weights.pop(to_remove)
 
     def _mutate_add(self, profits, weights, capacity):
         inds = np.arange(len(profits))
