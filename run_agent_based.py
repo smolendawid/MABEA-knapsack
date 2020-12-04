@@ -21,17 +21,9 @@ def log_genotype(latt, timestamp, it):
 
 
 if __name__ == '__main__':
-    config = {
-        'data_seed': 42,
-        'exp_seed': 42,
-        'log_diversity': True,
-        'log_genotypes': True,
-        'print_interval': 10,
-        'n_generations': 10000,
-        'early_stopping': 200,
-        'mutation_probability': 0.2,
-        'lattice_size': 12,
-    }
+
+    with open('config.yml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
 
     np.random.seed(config['data_seed'])
 
