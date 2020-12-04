@@ -1,12 +1,16 @@
 import numpy as np
+from collections import namedtuple
+
+Product = namedtuple('Product', ['i', 'weight', 'profit'])
 
 
 class Agent:
     def __init__(self, profits, weights, capacity):
         self.energy = 0
         self.capacity = capacity
-        self.chosen_profits = []
-        self.chosen_weights = []
+        self.chosen_products = []
+        self.genotype = np.zeros((len(weights), ), dtype=int)
+        self.resources = 0
 
         self._random_init(profits, weights, capacity)
 
@@ -22,48 +26,52 @@ class Agent:
                 break
             total_value += profits[ind]
             total_weight += weights[ind]
-            self.chosen_profits.append(profits[ind])
-            self.chosen_weights.append(weights[ind])
+
+            self.chosen_products.append(Product(ind, weights[ind], profits[ind]))
+            self.genotype[ind] += 1
 
         self.energy = total_value
 
     def _mutate_both(self, profits, weights, capacity):
-        inds_inner = np.arange(len(self.chosen_profits))
+        inds_inner = np.arange(len(self.chosen_products))
         inds_outer = np.arange(len(profits))
 
-        weights_sum = np.sum(self.chosen_weights)
-        profits_sum = np.sum(self.chosen_profits)
+        weights_sum = np.sum([p.weight for p in self.chosen_products])
+        profits_sum = np.sum([p.profit for p in self.chosen_products])
         while True:
             to_remove = np.random.choice(inds_inner, 1)[0]
             to_add = np.random.choice(inds_outer, 1)[0]
-            if weights_sum - self.chosen_weights[to_remove] + weights[to_add] < capacity:
-                self.energy = profits_sum - self.chosen_profits[to_remove] + profits[to_add]
-                self.chosen_profits.pop(to_remove)
-                self.chosen_weights.pop(to_remove)
+            if weights_sum - self.chosen_products[to_remove].weight + weights[to_add] < capacity:
+                self.energy = profits_sum - self.chosen_products[to_remove].profit + profits[to_add]
 
-                self.chosen_profits.append(profits[to_add])
-                self.chosen_weights.append(weights[to_add])
+                self.genotype[self.chosen_products[to_remove].i] -= 1
+                self.genotype[to_add] += 1
+
+                self.chosen_products.pop(to_remove)
+                self.chosen_products.append(Product(to_add, weights[to_add], profits[to_add]))
                 break
 
     def _mutate_remove(self):
-        inds = np.arange(len(self.chosen_profits))
+        inds = np.arange(len(self.chosen_products))
 
-        profits_sum = np.sum(self.chosen_profits)
+        profits_sum = np.sum([p.profit for p in self.chosen_products])
         to_remove = np.random.choice(inds, 1)[0]
-        self.energy = profits_sum - self.chosen_profits[to_remove]
-        self.chosen_profits.pop(to_remove)
-        self.chosen_weights.pop(to_remove)
+
+        self.genotype[self.chosen_products[to_remove].i] -= 1
+
+        self.energy = profits_sum - self.chosen_products[to_remove].profit
+        self.chosen_products.pop(to_remove)
 
     def _mutate_add(self, profits, weights, capacity):
         inds = np.arange(len(profits))
 
-        weights_sum = np.sum(self.chosen_weights)
-        profits_sum = np.sum(self.chosen_profits)
+        weights_sum = np.sum([p.weight for p in self.chosen_products])
+        profits_sum = np.sum([p.profit for p in self.chosen_products])
         for i in range(10):
             to_add = np.random.choice(inds, 1)[0]
             if weights_sum + weights[to_add] < capacity:
-                self.chosen_profits.append(profits[to_add])
-                self.chosen_weights.append(weights[to_add])
+                self.genotype[to_add] += 1
+                self.chosen_products.append(Product(to_add, weights[to_add], profits[to_add]))
                 self.energy = profits_sum + profits[to_add]
                 break
 
@@ -76,3 +84,6 @@ class Agent:
             self._mutate_remove()
         elif prob > 0.0:
             self._mutate_add(profits, weights, capacity)
+
+    def collect_resources(self, resources):
+        self.resources += resources

@@ -22,11 +22,34 @@ def brute_force_knapsack(x_prices, x_weights, x_capacity):
     return best_picks
 
 
+def unboundedKnapsack(W, n, val, wt):
+    # dp[i] is going to store maximum
+    # value with knapsack capacity i.
+    dp = [0 for i in range(W + 1)]
+
+    # Fill dp[] using above recursive formula
+    for i in range(W + 1):
+        for j in range(n):
+            if wt[j] <= i:
+                if dp[i] > dp[i - wt[j]] + val[j]:
+                    pass
+                else:
+                    dp[i] = dp[i - wt[j]] + val[j]
+
+    return dp[W]
+
+
 if __name__ == '__main__':
     np.random.seed(42)
     profits, weights, capacity = create_knapsack_data(item_count=20)
-    best_picks = brute_force_knapsack(profits, weights, capacity)
 
+    # Unbounded
+    print("Unbounded")
+    n = len(profits)
+    print(unboundedKnapsack(capacity, n, profits, weights))
+
+    print("Bounded")
+    best_picks = brute_force_knapsack(profits, weights, capacity)
     print(profits)
     print(weights)
     print(capacity)
@@ -35,3 +58,4 @@ if __name__ == '__main__':
 
     print(f"Weight sum: {np.sum(weights[best_picks])}")
     print(f"Best score: {np.sum(profits[best_picks])}")
+

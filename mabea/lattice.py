@@ -23,15 +23,6 @@ class Lattice:
         self.agent2ind = {v: k for k, v in self.ind2agent.items()}
         self.print()
 
-    def print(self):
-        print(tabulate(self.get_energies()))
-
-    def get_energies(self):
-        energies = np.zeros((self.size, self.size))
-        for i, (i_row, i_col) in self.agent2ind.items():
-            energies[i_row, i_col] = self.grid[i].energy
-        return energies
-
     def _get_neighbours(self, i_row, i_col):
 
         col_bw = i_col-1
@@ -55,14 +46,40 @@ class Lattice:
 
         return neighbours
 
+    def print(self):
+        print(tabulate(self.get_energies_lattice()))
+
+    def get_energies_lattice(self):
+        energies = np.zeros((self.size, self.size))
+        for i, (i_row, i_col) in self.agent2ind.items():
+            energies[i_row, i_col] = self.grid[i].energy
+        return energies
+
+    def distribute_resources(self, inds, energies):
+        """ add resources in neighbourhood according to local ranking"""
+        inds_sorted = np.argsort(energies, )
+        inds = np.array(inds)[inds_sorted]
+
+        # todo on edges scores are too high or too less because neighbourhood is smaller
+        for i, ind in enumerate(inds):
+            self.grid[ind].collect_resources(i)
+
+    def get_resources(self):
+        return [agent.resources for agent in self.grid]
+
+    def get_diversity(self):
+        return [agent.resources for agent in self.grid]
+
     def selection(self, profits, weights, capacity, mutation_probability):
 
-        energies = np.array(self.get_energies())
+        energies = np.array(self.get_energies_lattice())
         new_grid = []
 
         for i, (i_row, i_col) in self.agent2ind.items():
             neighbours_inds = self._get_neighbours(i_row, i_col)
             neighbours_energies = energies.ravel()[neighbours_inds]
+
+            self.distribute_resources(neighbours_inds, neighbours_energies)
 
             if self.grid[i].energy == np.amax(neighbours_energies):
                 alpha = copy.deepcopy(self.grid[i])
@@ -77,3 +94,17 @@ class Lattice:
             else:
                 new_grid.append(offspring)
         self.grid = new_grid
+
+    def diversity(self):
+
+        genotypes = []
+        for agent in self.grid:
+            genotypes.append(agent.genotype)
+
+        from sklearn.neighbors import NearestNeighbors
+        nrst_neigh = NearestNeighbors(n_neighbors=len(self.grid), algorithm='ball_tree')
+        nrst_neigh.fit(np.array(genotypes))
+
+        distances, indices = nrst_neigh.kneighbors(np.array(genotypes))
+
+        return distances
