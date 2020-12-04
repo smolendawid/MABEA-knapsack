@@ -44,7 +44,8 @@ if __name__ == '__main__':
     prev_maximum = 0
 
     for i in range(config['n_generations']):
-        latt.selection(profits, weights, capacity, mutation_probability=config['mutation_probability'])
+        latt.selection()
+        latt.mutation(profits, weights, capacity, mutation_probability=config['mutation_probability'])
 
         if i % config['print_interval'] == 0:
             os.system('clear')

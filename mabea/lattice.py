@@ -1,4 +1,3 @@
-import copy
 
 from tabulate import tabulate
 import numpy as np
@@ -14,6 +13,8 @@ class Lattice:
         self.grid = [Agent(profits, weights, capacity) for _ in range(self.n_agents)]
 
         self.crossover = CrossOver()
+
+        # Prepare index to lattice mapping
         self.ind2agent = {}
         i = 0
         for i_row in range(self.size):
@@ -21,9 +22,15 @@ class Lattice:
                 self.ind2agent[(i_row, i_col)] = i
                 i += 1
         self.agent2ind = {v: k for k, v in self.ind2agent.items()}
+
+        # Precompute neighbourhood indices
+        self.neighbourhood_inds = []
+        for i, (i_row, i_col) in self.agent2ind.items():
+            self.neighbourhood_inds.append(self._get_neighbourhood(i_row, i_col))
+
         self.print()
 
-    def _get_neighbours(self, i_row, i_col):
+    def _get_neighbourhood(self, i_row, i_col):
 
         col_bw = i_col-1
         col_fw = i_col+1
@@ -70,30 +77,36 @@ class Lattice:
     def get_diversity(self):
         return [agent.resources for agent in self.grid]
 
-    def selection(self, profits, weights, capacity, mutation_probability):
+    def selection(self):
 
         energies = np.array(self.get_energies_lattice())
-        new_grid = []
+        reproducing = []
 
         for i, (i_row, i_col) in self.agent2ind.items():
-            neighbours_inds = self._get_neighbours(i_row, i_col)
-            neighbours_energies = energies.ravel()[neighbours_inds]
+            neighbourhood_inds = self.neighbourhood_inds[i]
+            neighbours_energies = energies.ravel()[neighbourhood_inds]
+            self.distribute_resources(neighbourhood_inds, neighbours_energies)
 
-            self.distribute_resources(neighbours_inds, neighbours_energies)
+            is_reproducing = self.crossover.is_ready_to_reproduce(i, neighbourhood_inds, self.grid)
+            reproducing.append(is_reproducing)
 
-            if self.grid[i].energy == np.amax(neighbours_energies):
-                alpha = copy.deepcopy(self.grid[i])
-                offspring = alpha
-            else:
-                max_ind_abs = self.crossover.run(neighbours_energies, neighbours_inds)
-                offspring = copy.deepcopy(self.grid[max_ind_abs])
+        new_grid_cands = [[] for _ in range(len(self.grid))]
+        for i in range(len(self.grid)):
+            if reproducing[i]:
+                self.grid[i].resources = 0
+                neighbourhood_inds = self.neighbourhood_inds[i]
+                neighbours_energies = energies.ravel()[neighbourhood_inds]
+                min_ind = neighbourhood_inds[np.argmin(neighbours_energies)]
+                new_grid_cands[min_ind].append(i)
 
-            if np.random.rand() < mutation_probability:
-                offspring.mutate(profits, weights, capacity)
-                new_grid.append(offspring)
-            else:
-                new_grid.append(offspring)
+        new_grid = self.crossover.run(self.grid, new_grid_cands)
         self.grid = new_grid
+
+    def mutation(self, profits, weights, capacity, mutation_probability):
+        for i, (i_row, i_col) in self.agent2ind.items():
+            if np.random.rand() < mutation_probability:
+                self.grid[i].mutate(profits, weights, capacity)
+
 
     def diversity(self):
 
