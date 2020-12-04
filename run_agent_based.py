@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 import yaml
 import os
@@ -34,9 +33,6 @@ if __name__ == '__main__':
         'lattice_size': 12,
     }
 
-    # profits = [1, 6, 10, 16, 17, 18, 20, 31]
-    # weights = [1, 2, 3,  5,  5,  6,  7,  11]
-    # capacity = 20
     np.random.seed(config['data_seed'])
 
     profits, weights, capacity = create_knapsack_data(item_count=20)
