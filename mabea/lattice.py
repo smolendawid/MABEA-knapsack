@@ -107,7 +107,6 @@ class Lattice:
             if np.random.rand() < mutation_probability:
                 self.grid[i].mutate(profits, weights, capacity)
 
-
     def diversity(self):
 
         genotypes = []
@@ -120,4 +119,4 @@ class Lattice:
 
         distances, indices = nrst_neigh.kneighbors(np.array(genotypes))
 
-        return distances
+        return distances.mean()

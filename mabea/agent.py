@@ -38,7 +38,7 @@ class Agent:
 
         weights_sum = np.sum([p.weight for p in self.chosen_products])
         profits_sum = np.sum([p.profit for p in self.chosen_products])
-        while True:
+        for i in range(1):
             to_remove = np.random.choice(inds_inner, 1)[0]
             to_add = np.random.choice(inds_outer, 1)[0]
             if weights_sum - self.chosen_products[to_remove].weight + weights[to_add] < capacity:
@@ -67,7 +67,7 @@ class Agent:
 
         weights_sum = np.sum([p.weight for p in self.chosen_products])
         profits_sum = np.sum([p.profit for p in self.chosen_products])
-        for i in range(10):
+        for i in range(1):
             to_add = np.random.choice(inds, 1)[0]
             if weights_sum + weights[to_add] < capacity:
                 self.genotype[to_add] += 1
