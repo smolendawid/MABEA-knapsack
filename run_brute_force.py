@@ -4,7 +4,7 @@ No rights claimed
 """
 
 import numpy as np
-from generate_data import create_knapsack_data
+from generate_data import create_knapsack_data, create_knapsack_correlated
 
 
 def brute_force_knapsack(x_prices, x_weights, x_capacity):
@@ -41,7 +41,8 @@ def unboundedKnapsack(W, n, val, wt):
 
 if __name__ == '__main__':
     np.random.seed(42)
-    profits, weights, capacity = create_knapsack_data(item_count=20)
+    # profits, weights, capacity = create_knapsack_data(item_count=20)
+    profits, weights, capacity = create_knapsack_correlated(item_count=20)
 
     # Unbounded
     print("Unbounded")

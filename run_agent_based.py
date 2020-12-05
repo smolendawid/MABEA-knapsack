@@ -5,7 +5,7 @@ import os
 import numpy as np
 import matplotlib.pylab as plt
 
-from generate_data import create_knapsack_data
+from generate_data import create_knapsack_data, create_knapsack_correlated
 from mabea.lattice import Lattice
 
 
@@ -27,7 +27,12 @@ if __name__ == '__main__':
 
     np.random.seed(config['data_seed'])
 
-    profits, weights, capacity = create_knapsack_data(item_count=20)
+    if config['dataset'] == 'random':
+        profits, weights, capacity = create_knapsack_data(item_count=config['item_count'])
+    elif config['dataset'] == 'correlated':
+        profits, weights, capacity = create_knapsack_correlated(item_count=config['item_count'])
+    else:
+        raise ValueError("Config param 'dataset' can be 'random' or 'correlated'")
 
     np.random.seed(config['exp_seed'])
 
@@ -76,16 +81,20 @@ if __name__ == '__main__':
     print(f'Best result: {np.amax(maxes)}')
 
     plt.figure()
+    plt.title('Fitness')
     plt.plot(means)
     plt.plot(maxes, 'r')
+    plt.legend('mean', 'max')
     plt.savefig(os.path.join('results', timestamp, 'energies.png'))
 
     plt.figure()
+    plt.title('Available resources')
     plt.plot(rsc_mean)
     plt.plot(rsc_std, 'r')
     plt.savefig(os.path.join('results', timestamp, 'resources.png'))
 
     plt.figure()
+    plt.title('Diversity during experiment')
     plt.plot([d[0] for d in diversities], [d[1] for d in diversities])
     plt.savefig(os.path.join('results', timestamp, 'diversity.png'))
 

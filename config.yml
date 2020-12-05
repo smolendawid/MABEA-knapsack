@@ -1,5 +1,7 @@
 data_seed: 42
 exp_seed: 42
+dataset: 'random' # correlated or random
+item_count: 20
 log_diversity: True
 log_genotypes: True
 print_interval: 10

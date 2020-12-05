@@ -1,6 +1,7 @@
 
 from tabulate import tabulate
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
 
 from mabea.agent import Agent
 from mabea.crossover import CrossOver
@@ -113,8 +114,7 @@ class Lattice:
         for agent in self.grid:
             genotypes.append(agent.genotype)
 
-        from sklearn.neighbors import NearestNeighbors
-        nrst_neigh = NearestNeighbors(n_neighbors=len(self.grid), algorithm='ball_tree')
+        nrst_neigh = NearestNeighbors(n_neighbors=len(self.grid), metric='cosine')
         nrst_neigh.fit(np.array(genotypes))
 
         distances, indices = nrst_neigh.kneighbors(np.array(genotypes))
