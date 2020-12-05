@@ -84,7 +84,7 @@ if __name__ == '__main__':
     plt.title('Fitness')
     plt.plot(means)
     plt.plot(maxes, 'r')
-    plt.legend('mean', 'max')
+    plt.legend(['mean', 'max'])
     plt.savefig(os.path.join('results', timestamp, 'energies.png'))
 
     plt.figure()
