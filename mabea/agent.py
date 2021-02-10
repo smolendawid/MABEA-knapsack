@@ -6,7 +6,7 @@ Product = namedtuple('Product', ['i', 'weight', 'profit'])
 
 class Agent:
     def __init__(self, profits, weights, capacity):
-        self.energy = 0
+        self.fitness = 0
         self.capacity = capacity
         self.chosen_products = []
         self.genotype = np.zeros((len(weights), ), dtype=int)
@@ -30,9 +30,9 @@ class Agent:
             self.chosen_products.append(Product(ind, weights[ind], profits[ind]))
             self.genotype[ind] += 1
 
-        self.energy = total_value
+        self.fitness = total_value
 
-    def _mutate_both(self, profits, weights, capacity):
+    def _mutate_replace(self, profits, weights, capacity):
         inds_inner = np.arange(len(self.chosen_products))
         inds_outer = np.arange(len(profits))
 
@@ -42,7 +42,7 @@ class Agent:
             to_remove = np.random.choice(inds_inner, 1)[0]
             to_add = np.random.choice(inds_outer, 1)[0]
             if weights_sum - self.chosen_products[to_remove].weight + weights[to_add] < capacity:
-                self.energy = profits_sum - self.chosen_products[to_remove].profit + profits[to_add]
+                self.fitness = profits_sum - self.chosen_products[to_remove].profit + profits[to_add]
 
                 self.genotype[self.chosen_products[to_remove].i] -= 1
                 self.genotype[to_add] += 1
@@ -59,7 +59,7 @@ class Agent:
 
         self.genotype[self.chosen_products[to_remove].i] -= 1
 
-        self.energy = profits_sum - self.chosen_products[to_remove].profit
+        self.fitness = profits_sum - self.chosen_products[to_remove].profit
         self.chosen_products.pop(to_remove)
 
     def _mutate_add(self, profits, weights, capacity):
@@ -72,14 +72,14 @@ class Agent:
             if weights_sum + weights[to_add] < capacity:
                 self.genotype[to_add] += 1
                 self.chosen_products.append(Product(to_add, weights[to_add], profits[to_add]))
-                self.energy = profits_sum + profits[to_add]
+                self.fitness = profits_sum + profits[to_add]
                 break
 
     def mutate(self, profits, weights, capacity):
 
         prob = np.random.rand()
         if prob > 0.66:
-            self._mutate_both(profits, weights, capacity)
+            self._mutate_replace(profits, weights, capacity)
         elif prob > 0.33:
             self._mutate_remove()
         elif prob > 0.0:

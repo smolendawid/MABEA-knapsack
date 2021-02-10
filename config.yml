@@ -1,11 +1,11 @@
 data_seed: 42
 exp_seed: 42
-dataset: 'random' # correlated or random
-item_count: 20
+dataset: 'correlated' # correlated or random
+item_count: 30
 log_diversity: True
 log_genotypes: True
 print_interval: 10
-n_generations: 10000
-early_stopping: 200
-mutation_probability: 0.2
+n_generations: 15000
+early_stopping: 1000
+mutation_probability: 0.3
 lattice_size: 12

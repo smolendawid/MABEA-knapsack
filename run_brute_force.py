@@ -42,7 +42,8 @@ def unboundedKnapsack(W, n, val, wt):
 if __name__ == '__main__':
     np.random.seed(42)
     # profits, weights, capacity = create_knapsack_data(item_count=20)
-    profits, weights, capacity = create_knapsack_correlated(item_count=20)
+    profits, weights, capacity = create_knapsack_correlated(item_count=30)
+    import time
 
     # Unbounded
     print("Unbounded")
@@ -50,7 +51,9 @@ if __name__ == '__main__':
     print(unboundedKnapsack(capacity, n, profits, weights))
 
     print("Bounded")
+    start = time.time()
     best_picks = brute_force_knapsack(profits, weights, capacity)
+    print(f"Time {time.time() - start}")
     print(profits)
     print(weights)
     print(capacity)

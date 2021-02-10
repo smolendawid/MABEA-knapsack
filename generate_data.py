@@ -42,6 +42,6 @@ if __name__ == '__main__':
     np.random.seed(42)
     profits, weights, _ = create_knapsack_correlated(item_count=20)
 
-    plt.scatter(weights, profits)
+    plt.scatter(weights, profits, marker='x')
     plt.legend(['random', 'correlated'])
     plt.show()

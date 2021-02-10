@@ -24,7 +24,7 @@ class CrossOver:
             elif len(new_grid_cands[i]) == 1:
                 new_grid.append(copy.deepcopy(grid[new_grid_cands[i][0]]))
             else:
-                candidates = [grid[cand_i].energy for cand_i in new_grid_cands[i]]
+                candidates = [grid[cand_i].fitness for cand_i in new_grid_cands[i]]
                 best_candidate = np.argmax(candidates)
                 new_grid.append(copy.deepcopy(grid[new_grid_cands[i][best_candidate]]))
 

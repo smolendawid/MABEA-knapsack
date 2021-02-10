@@ -29,7 +29,7 @@ class Lattice:
         for i, (i_row, i_col) in self.agent2ind.items():
             self.neighbourhood_inds.append(self._get_neighbourhood(i_row, i_col))
 
-        self.print()
+        # self.print()
 
     def _get_neighbourhood(self, i_row, i_col):
 
@@ -60,7 +60,7 @@ class Lattice:
     def get_energies_lattice(self):
         energies = np.zeros((self.size, self.size))
         for i, (i_row, i_col) in self.agent2ind.items():
-            energies[i_row, i_col] = self.grid[i].energy
+            energies[i_row, i_col] = self.grid[i].fitness
         return energies
 
     def distribute_resources(self, inds, energies):
